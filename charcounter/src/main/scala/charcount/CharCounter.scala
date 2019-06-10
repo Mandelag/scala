@@ -60,9 +60,14 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
   }
 
   override def receive = {
+    // Count character in a batch of lines
     case Lines(rows) => {
-      // println(rows)
-      source ! CharCount(Map('T' -> 5, 'B' -> 7))
+      val reply = CharCount(rows
+        .flatMap(_.toString)
+        .filter(_.isLetterOrDigit)
+        .groupBy(x => x)
+        .mapValues(_.length))
+      source ! reply
       notifyReadyToWork()
     }
   }
