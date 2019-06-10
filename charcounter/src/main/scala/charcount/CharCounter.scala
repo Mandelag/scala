@@ -16,7 +16,36 @@ object LineReaderActor {
 }
 
 object CharCounterActor {
+  import LineReaderActor._
+
   def props(reader: ActorRef) = Props(new CharCounterActor(reader))
+
+  val processRow: (List[String]) => CharCount = processRowsDefault
+  
+  private def processRowsDefault(rows: List[String]): CharCount = {
+    CharCount(rows
+        .flatMap(_.toString)
+        .filter(_.isLetterOrDigit)
+        .map(_.toLower)
+        .groupBy(x => x)
+        .mapValues(_.length))
+  }
+
+  private def processRowsWithFold(rows: List[String]): CharCount = {
+    import scala.collection.mutable.Map
+
+    CharCount(rows
+        .flatMap(_.toString)
+        .filter(_.isLetterOrDigit)
+        .foldLeft(collection.mutable.Map[Char, Int]()){ (mutableMap, char) =>
+          val prev = mutableMap.getOrElse(char, 0)
+          mutableMap(char) = prev + 1
+          mutableMap
+        }
+        .toMap
+        )
+  }
+
 }
 
 class LineReaderActor(fileStream: BufferedSource) extends Actor with ActorLogging {
@@ -62,11 +91,7 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
   override def receive = {
     // Count character in a batch of lines
     case Lines(rows) => {
-      val reply = CharCount(rows
-        .flatMap(_.toString)
-        .filter(_.isLetterOrDigit)
-        .groupBy(x => x)
-        .mapValues(_.length))
+      val reply = processRow(rows)
       source ! reply
       notifyReadyToWork()
     }
