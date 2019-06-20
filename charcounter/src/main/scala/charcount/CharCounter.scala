@@ -82,7 +82,7 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
   import LineReaderActor._
   import CharCounterActor._
 
-  final val DEFAULT_BATCH_SIZE = 15
+  final val DEFAULT_BATCH_SIZE = 10
 
   override def preStart = {
     notifyReadyToWork()
