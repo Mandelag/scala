@@ -51,12 +51,16 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
   import akka.actor.{ Address, AddressFromURIString, Deploy, Props }
   import akka.remote.RemoteScope
   
+  var waitCounter = 0
+
   val rows = fileStream.getLines
   val NUMBER_OF_WORKER_ACTORS= 16
 
   val workerRefs = workerAddress.map( address => {
     for (i <- 1 to NUMBER_OF_WORKER_ACTORS) yield {
-      context.actorOf(CharCounterActor.props(self).withDeploy(Deploy(scope = RemoteScope(address))))
+      val actorRef = context.actorOf(CharCounterActor.props(self).withDeploy(Deploy(scope = RemoteScope(address))))
+      println(address)
+      actorRef
     }
   }).flatten
 
@@ -67,18 +71,27 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
     case ReadMore(value) => {
       if (!rows.hasNext) {
         workerRefs.foreach(_ ! PoisonPill)
-        self ! PoisonPill
+        // self ! PoisonPill
       } else {
         sender() ! Lines(rows.take(value).toList)
+        waitCounter += 1
       }
     }
-    case CharCount(counts) => {
+    case CharCount(counts) =>   {
       println(counts)
+      waitCounter -= 1
+      checkIfDone
     }
   }
 
   override def postStop = {
     log.info("Done!")
+  }
+
+  private def checkIfDone = {
+    if (waitCounter <= 0) {
+        self ! PoisonPill
+    }
   }
 }
 
@@ -86,7 +99,7 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
   import LineReaderActor._
   import CharCounterActor._
 
-  final val DEFAULT_BATCH_SIZE = 10
+  final val DEFAULT_BATCH_SIZE = 1024
 
   override def preStart = {
     notifyReadyToWork()
@@ -95,6 +108,8 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
   override def receive = {
     // Count character in a batch of lines
     case Lines(rows) => {
+      log.info("Received new row!  Processing...")
+      println("Weh new row!")
       val reply = processRow(rows)
       source ! reply
       notifyReadyToWork()

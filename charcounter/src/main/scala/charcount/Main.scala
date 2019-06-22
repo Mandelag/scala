@@ -39,7 +39,18 @@ object Main {
   def startDriver() {
     import akka.actor.Address
 
-    val system = ActorSystem("char-counter")
+    val driverConf = ConfigFactory.parseString(s"""
+    akka {
+      remote {
+        netty.tcp {
+          hostname = "0.0.0.0"
+          port = 2552
+        }
+      }
+    }
+    """)
+
+    val system = ActorSystem("char-counter", ConfigFactory.load(driverConf))
 
     val config = ConfigFactory.load()
 
