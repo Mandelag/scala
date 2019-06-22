@@ -3,10 +3,10 @@ package charcount
 import akka.actor._
 import akka.event.Logging
 import scala.io.BufferedSource
-
+import akka.actor.Address
 
 object LineReaderActor {
-  def props(fileStream: BufferedSource) = Props(new LineReaderActor(fileStream))
+  def props(fileStream: BufferedSource, workerConfig: List[Address]) = Props(new LineReaderActor(fileStream, workerConfig))
   // Tells the LineReaderActor to read the next N lines
   case class ReadMore(lines: Int)
   // Send batches of rows, containing columns.
@@ -45,17 +45,21 @@ object CharCounterActor {
         .toMap
         )
   }
-
 }
 
-class LineReaderActor(fileStream: BufferedSource) extends Actor with ActorLogging {
-  import akka.actor.{ Address, AddressFromURIString }
-
+class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) extends Actor with ActorLogging {
+  import akka.actor.{ Address, AddressFromURIString, Deploy, Props }
+  import akka.remote.RemoteScope
+  
   val rows = fileStream.getLines
+  val NUMBER_OF_WORKER_ACTORS= 16
 
-  val workerRefs = for (i <- 1 to 16) yield {
-    context.actorOf(CharCounterActor.props(self))
-  }
+  val workerRefs = workerAddress.map( address => {
+    for (i <- 1 to NUMBER_OF_WORKER_ACTORS) yield {
+      context.actorOf(CharCounterActor.props(self).withDeploy(Deploy(scope = RemoteScope(address))))
+    }
+  }).flatten
+
 
   import LineReaderActor._
 
