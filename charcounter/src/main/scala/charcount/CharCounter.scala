@@ -12,7 +12,7 @@ object LineReaderActor {
   // Send batches of rows, containing columns.
   case class Lines(lines: List[String])
   // Data structure to save the resulting letter count. 
-  case class CharCount(map: Map[Char, Int])
+  case class CharCount(map: List[(Char, Int)])
 }
 
 object CharCounterActor {
@@ -28,7 +28,8 @@ object CharCounterActor {
         .filter(_.isLetterOrDigit)
         .map(_.toLower)
         .groupBy(x => x)
-        .mapValues(_.length))
+        .mapValues(_.length)
+        .toList)
   }
 
   private def processRowsWithFold(rows: List[String]): CharCount = {
@@ -42,7 +43,7 @@ object CharCounterActor {
           mutableMap(char) = prev + 1
           mutableMap
         }
-        .toMap
+        .toList
         )
   }
 }
@@ -56,10 +57,12 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
   val rows = fileStream.getLines
   val NUMBER_OF_WORKER_ACTORS= 16
 
+  val t0 = System.currentTimeMillis()
+  val result = scala.collection.mutable.Map[Char, Int]()
+
   val workerRefs = workerAddress.map( address => {
     for (i <- 1 to NUMBER_OF_WORKER_ACTORS) yield {
       val actorRef = context.actorOf(CharCounterActor.props(self).withDeploy(Deploy(scope = RemoteScope(address))))
-      println(address)
       actorRef
     }
   }).flatten
@@ -78,14 +81,19 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
       }
     }
     case CharCount(counts) =>   {
-      println(counts)
+      counts.foreach(count => {
+        val updatedValue: Int = result.get(count._1).getOrElse(0) + count._2
+        result.update(count._1, updatedValue)
+      })
       waitCounter -= 1
       checkIfDone
     }
   }
 
   override def postStop = {
-    log.info("Done!")
+    val elapsed = System.currentTimeMillis() - t0
+    println(result)
+    log.info(s"Done in $elapsed ms.")
   }
 
   private def checkIfDone = {
@@ -109,7 +117,6 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
     // Count character in a batch of lines
     case Lines(rows) => {
       log.info("Received new row!  Processing...")
-      println("Weh new row!")
       val reply = processRow(rows)
       source ! reply
       notifyReadyToWork()

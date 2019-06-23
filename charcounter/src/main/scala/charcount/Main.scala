@@ -20,10 +20,20 @@ object Main {
     
     val workerConf = ConfigFactory.parseString(s"""
     akka {
+      actor {
+        provider = remote
+      }
       remote {
+        maximum-payload-bytes = 30000000 bytes
         netty.tcp {
           hostname = "$listenAddress"
           port = $listenPort
+
+          // https://stackoverflow.com/questions/36685326/max-allowed-size-128000-bytes-actual-size-of-encoded-class-scala-error-in-akk
+          message-frame-size =  30000000b
+          send-buffer-size =  30000000b
+          receive-buffer-size =  30000000b
+          maximum-frame-size = 30000000b
         }
       }
     }
@@ -41,10 +51,19 @@ object Main {
 
     val driverConf = ConfigFactory.parseString(s"""
     akka {
+      actor {
+        provider = remote
+      }
       remote {
+        maximum-payload-bytes = 30000000 bytes
         netty.tcp {
           hostname = "0.0.0.0"
           port = 2552
+
+          message-frame-size =  30000000b
+          send-buffer-size =  30000000b
+          receive-buffer-size =  30000000b
+          maximum-frame-size = 30000000b
         }
       }
     }
