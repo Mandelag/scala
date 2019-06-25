@@ -20,7 +20,7 @@ object CharCounterActor {
 
   def props(reader: ActorRef) = Props(new CharCounterActor(reader))
 
-  case class Ready()
+  object Ready
 
   val processRow: (List[String]) => CharCount = processRowsDefault
   
@@ -88,7 +88,8 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
         result.update(count._1, updatedValue)
       })
       waitCounter -= 1
-      checkIfDone
+//      println(waitCounter)
+       checkIfDone
     }
   }
 
@@ -112,7 +113,7 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
   final val DEFAULT_BATCH_SIZE = 1024
 
   override def preStart = {
-    notifyReadyToWork()
+    self ! Ready
   }
 
   override def receive = {
@@ -121,14 +122,14 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
       log.info("Received new row!  Processing...")
       val reply = processRow(rows)
       source ! reply
-      self ! Ready() // requeue
+      self ! Ready // requeue
     }
     case Ready => {
-      notifyReadyToWork()
+      source ! ReadMore(DEFAULT_BATCH_SIZE)
+    }
+    case _ => {
+      println("Dapet surat")
     }
   }
 
-  private def notifyReadyToWork() {
-    source ! ReadMore(DEFAULT_BATCH_SIZE)
-  }
 }
