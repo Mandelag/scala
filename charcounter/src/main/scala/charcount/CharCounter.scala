@@ -20,6 +20,8 @@ object CharCounterActor {
 
   def props(reader: ActorRef) = Props(new CharCounterActor(reader))
 
+  case class Ready()
+
   val processRow: (List[String]) => CharCount = processRowsDefault
   
   private def processRowsDefault(rows: List[String]): CharCount = {
@@ -119,6 +121,9 @@ class CharCounterActor(source: ActorRef) extends Actor with ActorLogging {
       log.info("Received new row!  Processing...")
       val reply = processRow(rows)
       source ! reply
+      self ! Ready() // requeue
+    }
+    case Ready => {
       notifyReadyToWork()
     }
   }
