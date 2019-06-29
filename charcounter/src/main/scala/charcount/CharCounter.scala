@@ -60,12 +60,12 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
   val t0 = System.currentTimeMillis()
   val result = scala.collection.mutable.Map[Char, Int]()
 
-  val workerRefs = workerAddress.map( address => {
+  val workerRefs = workerAddress.flatMap( address => {
     for (i <- 1 to NUMBER_OF_WORKER_ACTORS) yield {
       val actorRef = context.actorOf(CharCounterActor.props(self).withDeploy(Deploy(scope = RemoteScope(address))))
       actorRef
     }
-  }).flatten
+  })
 
 
   import LineReaderActor._
@@ -82,7 +82,7 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
     }
     case CharCount(counts) =>   {
       counts.foreach(count => {
-        val updatedValue: Int = result.get(count._1).getOrElse(0) + count._2
+        val updatedValue: Int = result.getOrElse(count._1, 0) + count._2
         result.update(count._1, updatedValue)
       })
       waitCounter -= 1
