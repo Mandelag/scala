@@ -3,7 +3,7 @@ Learning the Akka toolkit for parallel processing.
 This takes advantage for not just multiple cores in a single machine,
 but also for multiple cores in multiple machines.
 
-This program will try to read csv and process it per row in parallel accross multiple cores and multiple nodes.
+This program will try to read csv and process it per row in parallel accross multiple cores and multiple nodes. It will be processed by getting data from other service, hence the name.
 
 Akka provides the right-level of abstraction over concepts and problems related to programming in a distributed environment.
 Those abstraction and problems helps me learn to build a reactive, or just better application.
@@ -15,7 +15,7 @@ Install SBT (scala build tools) and do
 
 ```
 git clone https://github.com/Mandelag/scala.git
-cd scala
+cd scala/access-service
 sbt stage
 ```
 It will create an executable script for the program at ```target/universal/stage/bin/useservice```
