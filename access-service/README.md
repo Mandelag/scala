@@ -38,15 +38,26 @@ The following example are used to setup a cluster in your local environment.
 
 #### To run as a worker node with single instance of ```CsvMaster```
 ```
-target/universal/stage/bin/useservice worker -Dakka.cluster.seed-nodes.1="akka://csv-processing@localhost:2661" -Dakka.remote.artery.canonical.port=2661
+target/universal/stage/bin/useservice worker \
+-Dakka.cluster.seed-nodes.0="akka://csv-processing@localhost:2661" \
+-Dakka.remote.artery.canonical.hostname=localhost \
+-Dakka.remote.artery.canonical.port=2661
 ```
 #### To run as a purely worker node
 ```
-target/universal/stage/bin/useservice worker -Dakka.cluster.seed-nodes.1="akka://csv-processing@localhost:2661" -Dakka.remote.artery.canonical.port=2662 -Dapp.csv-master-address="akka://csv-processing@localhost:2661/user/csv-master"
+target/universal/stage/bin/useservice worker \
+-Dakka.cluster.seed-nodes.0="akka://csv-processing@localhost:2661" \
+-Dakka.remote.artery.canonical.hostname=localhost \
+-Dakka.remote.artery.canonical.port=2662 \
+-Dapp.csv-master-address="akka://csv-processing@localhost:2661/user/csv-master"
 ```
 #### To run the driver
 ```
-target/universal/stage/bin/useservice driver -Dakka.cluster.seed-nodes.1="akka://csv-processing@localhost:2661" -Dakka.remote.artery.canonical.port=2666 -Dapp.csv-master-address="akka://csv-processing@localhost:2661/user/csv-master"
+target/universal/stage/bin/useservice driver \
+-Dakka.cluster.seed-nodes.0="akka://csv-processing@localhost:2661" \
+-Dakka.remote.artery.canonical.hostname=localhost \
+-Dakka.remote.artery.canonical.port=2666 \
+-Dapp.csv-master-address="akka://csv-processing@localhost:2661/user/csv-master"
 ```
 
 ##### Info
