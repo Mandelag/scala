@@ -3,7 +3,7 @@ package learnakka
 import akka.actor.{Actor, ActorRef, Props}
 
 object CsvWorker {
-  object Available
+  case object Available
 
   def props(csvMaster: ActorRef) = Props(new CsvWorker(csvMaster))
 }
@@ -25,9 +25,12 @@ class CsvWorker(csvMaster: ActorRef) extends Actor {
     case Available => {
       csvMaster ! WorkerAvailable
     }
+    case TaskAvailable => {
+      csvMaster ! WorkerAvailable
+    }
   }
 
   def processRow(row: Seq[String]) = {
-    Row(row ++ Seq[String]("haiiiiiiiiiii"))
+    Row(row ++ Seq[String]("ahahaiii"))
   }
 }

@@ -10,16 +10,15 @@ object CsvMaster {
   case class RegisterWorker(worker: ActorRef)
   case class Row(row: Seq[String])
   case class JobsGiven(jobs: Int)
-  object WorkerAvailable
-  object TaskAvailable
-  object CurrentlyBusy
+  case object WorkerAvailable
+  case object TaskAvailable
+  case object CurrentlyBusy
 
   def props() = Props(new CsvMaster())
 }
 
 class CsvMaster extends Actor with ActorLogging {
   import CsvMaster._
-  import ResultProcessor._
 
   val workers = mutable.Set.empty[ActorRef]
 
@@ -31,11 +30,14 @@ class CsvMaster extends Actor with ActorLogging {
 
     case ProcessCsv(fileName) => {
       if (currentTask.isDefined) {
+        println(currentTask)
         sender() ! CurrentlyBusy
       } else {
         currentTask = Some(CSVReader.open(fileName).iterator)
         resultHandler = Some(context.actorOf(ResultProcessor.props()))
-        workers.foreach( _ ! TaskAvailable)
+        workers.foreach( worker => {
+          worker ! TaskAvailable
+        })
       }
     }
 

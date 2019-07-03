@@ -2,14 +2,15 @@ package learnakka
 
 import akka.actor.{Actor, PoisonPill, Props}
 import learnakka.CsvMaster.{JobsGiven, Row}
-import learnakka.ResultProcessor.{CheckDone, WaitCounter}
+
 
 object ResultProcessor {
   def props() = Props(new ResultProcessor())
 
-  object CheckDone
+  case object CheckDone
   case class WaitCounter(increment: Int)
 }
+
 class ResultProcessor extends Actor {
 
   var messagesReceived = 0
@@ -25,9 +26,6 @@ class ResultProcessor extends Actor {
     case JobsGiven(n) => {
       totalMessages = Some(n)
       checkDone()
-    }
-    case a: Any  =>  {
-      println( "ahai " + a )
     }
   }
 

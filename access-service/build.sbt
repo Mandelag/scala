@@ -8,6 +8,7 @@ lazy val app = (project in file("."))
       "com.typesafe.akka" %% "akka-actor" % "2.5.23",
       "com.typesafe.akka" %% "akka-stream" % "2.5.23",
       "com.typesafe.akka" %% "akka-remote" % "2.5.23",
+      "com.typesafe.akka" %% "akka-cluster" % "2.5.23",
       "com.typesafe" % "config" % "1.3.3",
       "com.github.tototoshi" %% "scala-csv" % "1.3.6"
     )
