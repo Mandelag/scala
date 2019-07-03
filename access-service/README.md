@@ -3,9 +3,11 @@ Learning the Akka toolkit for parallel processing.
 This takes advantage for not just multiple cores in a single machine,
 but also for multiple cores in multiple machines.
 
+This program will try to read csv and process it per row in parallel accross multiple cores and multiple nodes.
+
 Akka provides the right-level of abstraction over concepts and problems related to programming in a distributed environment.
 Those abstraction and problems helps me learn to build a reactive, or just better application.
-Highly recommend anyone who wish to be a better software engineer to learn this!
+Highly recommend this anyone who wish to be a better software engineer to learn this!
 
 ## How to build
 
