@@ -20,6 +20,8 @@ object CharCounterActor {
 
   def props() = Props(new CharCounterActor())
 
+  object Ready
+
   val processRow: (List[String]) => CharCount = processRowsDefault
   
   private def processRowsDefault(rows: List[String]): CharCount = {
@@ -83,7 +85,8 @@ class LineReaderActor(fileStream: BufferedSource, workerAddress: List[Address]) 
         log.info(s"$counts")
       }
       waitCounter -= 1
-      checkIfDone
+//      println(waitCounter)
+       checkIfDone
     }
   }
 
@@ -109,7 +112,7 @@ class CharCounterActor() extends Actor with ActorLogging {
   val result = scala.collection.mutable.Map[Char, Int]()
 
   override def preStart = {
-    notifyReadyToWork()
+    self ! Ready
   }
 
   override def receive = {
