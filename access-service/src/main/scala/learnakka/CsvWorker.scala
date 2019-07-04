@@ -1,6 +1,6 @@
 package learnakka
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 
 object CsvWorker {
   case object Available
@@ -8,7 +8,7 @@ object CsvWorker {
   def props(csvMaster: ActorRef) = Props(new CsvWorker(csvMaster))
 }
 
-class CsvWorker(csvMaster: ActorRef) extends Actor {
+class CsvWorker(csvMaster: ActorRef) extends Actor with ActorLogging {
   import CsvMaster._
   import CsvWorker._
 
@@ -19,7 +19,12 @@ class CsvWorker(csvMaster: ActorRef) extends Actor {
 
   def receive() = {
     case Row(row) => {
-      sender() ! processRow(row)
+      sender() ! Row(processRow(row))
+      self ! Available
+    }
+    case BatchRow(rows) => {
+//      log.info("Processing rows of length " + rows.length)
+      sender() ! BatchRow(processBatchRow(rows))
       self ! Available
     }
     case Available => {
@@ -30,7 +35,11 @@ class CsvWorker(csvMaster: ActorRef) extends Actor {
     }
   }
 
+  def processBatchRow(rows: Seq[Seq[String]]) = {
+    rows.map(processRow)
+  }
+
   def processRow(row: Seq[String]) = {
-    Row(row ++ Seq[String]("ahahaiii"))
+    row ++ Seq[String]("ahahaiii")
   }
 }

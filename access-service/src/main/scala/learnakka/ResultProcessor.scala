@@ -1,7 +1,7 @@
 package learnakka
 
 import akka.actor.{Actor, PoisonPill, Props}
-import learnakka.CsvMaster.{JobsGiven, Row}
+import learnakka.CsvMaster.{BatchRow, JobsGiven, Row}
 
 
 object ResultProcessor {
@@ -20,6 +20,10 @@ class ResultProcessor extends Actor {
   def receive() = {
     case Row(row) => {
 //      println(row)
+      messagesReceived += 1
+      checkDone()
+    }
+    case BatchRow(rows) => {
       messagesReceived += 1
       checkDone()
     }

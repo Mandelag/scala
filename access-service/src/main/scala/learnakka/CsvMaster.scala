@@ -9,6 +9,7 @@ object CsvMaster {
   case class ProcessCsv(fileName: String)
   case class RegisterWorker(worker: ActorRef)
   case class Row(row: Seq[String])
+  case class BatchRow(rows: Seq[Seq[String]])
   case class JobsGiven(jobs: Int)
   case object WorkerAvailable
   case object TaskAvailable
@@ -22,7 +23,11 @@ class CsvMaster extends Actor with ActorLogging {
 
   val workers = mutable.Set.empty[ActorRef]
 
-  var currentTask: Option[Iterator[Seq[String]]] = None
+  val BATCH_SIZE = 10000
+
+  // each task is a group of csv rows
+  var currentTask: Option[Iterator[Seq[Seq[String]]]] = None
+
   var resultHandler: Option[ActorRef] = None
   var jobCount = 0
 
@@ -33,7 +38,9 @@ class CsvMaster extends Actor with ActorLogging {
         println(currentTask)
         sender() ! CurrentlyBusy
       } else {
-        currentTask = Some(CSVReader.open(fileName).iterator)
+        val iter = CSVReader.open(fileName).iterator
+        iter.grouped(BATCH_SIZE)
+        currentTask = Option(iter.grouped(BATCH_SIZE))
         resultHandler = Some(context.actorOf(ResultProcessor.props()))
         workers.foreach( worker => {
           worker ! TaskAvailable
@@ -47,7 +54,8 @@ class CsvMaster extends Actor with ActorLogging {
       }
       case Some(iterator) => {
         if (iterator.hasNext && resultHandler.isDefined) {
-          sender().tell(Row(iterator.next()), resultHandler.get)
+          val rows = iterator.next()
+          sender().tell(BatchRow(rows), resultHandler.get)
           jobCount = jobCount + 1
         } else {
           resultHandler.getOrElse(ActorRef.noSender) ! JobsGiven(jobCount)
